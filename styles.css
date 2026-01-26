@@ -27,6 +27,14 @@ body {
     overflow: hidden;
 }
 
+/* Emoji rendering - ensure color emojis display properly on Chromecast */
+.icon, .voter-icon, .abstain-icon, .trophy {
+    font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Android Emoji', 'EmojiSymbols', sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+}
+
 #app {
     width: 100vw;
     height: 100vh;
