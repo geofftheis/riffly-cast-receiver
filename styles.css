@@ -1,12 +1,12 @@
 /* Riffly Cast Receiver Styles */
 
-/* Brand Colors */
+/* Brand Colors - matching Android app theme from Color.kt */
 :root {
-    --riffly-teal: #008080;
-    --riffly-lime: #32CD32;
-    --riffly-pink: #FF69B4;
-    --riffly-yellow: #FFD700;
-    --riffly-orange: #FFA500;
+    --riffly-teal: #2B9B9B;
+    --riffly-lime: #9BC53D;
+    --riffly-pink: #E9479F;
+    --riffly-yellow: #F7D94C;
+    --riffly-orange: #FF9800;
     --riffly-white: #FFFFFF;
     --riffly-dark: #1A1A2E;
     --riffly-card-bg: rgba(255, 255, 255, 0.95);
@@ -366,7 +366,7 @@ body {
 
 .result-card.winner {
     border: 4px solid var(--riffly-lime);
-    box-shadow: 0 0 20px rgba(50, 205, 50, 0.4);
+    box-shadow: 0 0 20px rgba(155, 197, 61, 0.4);
 }
 
 .result-card .player-name {
