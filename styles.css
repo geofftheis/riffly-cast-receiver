@@ -382,17 +382,39 @@ body {
     margin-bottom: 15px;
 }
 
-.result-card .vote-count {
-    font-size: 36px;
-    font-weight: bold;
-    color: var(--riffly-lime);
-    margin-bottom: 10px;
+.result-card .result-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .result-card .voter-icons {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    flex: 1;
+}
+
+.result-card .score-section {
+    text-align: right;
+    margin-left: 20px;
+}
+
+.result-card .total-points {
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--riffly-lime);
+}
+
+.result-card .score-breakdown {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.result-card .score-breakdown .votes-line,
+.result-card .score-breakdown .bonus-line {
+    line-height: 1.4;
 }
 
 .voter-icon {
