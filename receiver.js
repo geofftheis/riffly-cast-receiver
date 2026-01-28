@@ -55,6 +55,26 @@ function updateTimerStyle(element, seconds, totalSeconds) {
 }
 
 /**
+ * Parse emojis in an element using Twemoji (renders as images)
+ * This ensures emojis display correctly on Chromecast devices
+ */
+function parseEmojis(element) {
+    if (typeof twemoji !== 'undefined') {
+        try {
+            twemoji.parse(element, {
+                folder: 'svg',
+                ext: '.svg',
+                base: 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/'
+            });
+        } catch (e) {
+            console.error('Twemoji parse error:', e);
+        }
+    } else {
+        console.warn('Twemoji not loaded');
+    }
+}
+
+/**
  * Create a player card element
  */
 function createPlayerCard(player) {
@@ -72,15 +92,19 @@ function createPlayerCard(player) {
     card.appendChild(icon);
     card.appendChild(name);
 
+    // Parse emojis to render as images
+    parseEmojis(icon);
+
     return card;
 }
 
 /**
  * Create a leaderboard entry element
  */
-function createLeaderboardEntry(player, showRoundScore = true) {
+function createLeaderboardEntry(player, showRoundScore = true, highlightTotalScore = false) {
     const entry = document.createElement('div');
     entry.className = 'leaderboard-entry rank-' + player.rank;
+    entry.setAttribute('data-player-id', player.peerId || player.name);
 
     const rank = document.createElement('span');
     rank.className = 'rank';
@@ -107,13 +131,16 @@ function createLeaderboardEntry(player, showRoundScore = true) {
     }
 
     const totalScore = document.createElement('span');
-    totalScore.className = 'total-score';
+    totalScore.className = 'total-score' + (highlightTotalScore ? ' highlighted' : '');
     totalScore.textContent = player.totalScore;
 
     entry.appendChild(rank);
     entry.appendChild(icon);
     entry.appendChild(info);
     entry.appendChild(totalScore);
+
+    // Parse emojis to render as images
+    parseEmojis(icon);
 
     return entry;
 }
@@ -125,6 +152,8 @@ function createVoterIcon(iconId, isAbstain = false) {
     const icon = document.createElement('span');
     icon.className = isAbstain ? 'abstain-icon' : 'voter-icon';
     icon.textContent = iconId;
+    // Parse emojis to render as images
+    parseEmojis(icon);
     return icon;
 }
 
@@ -334,20 +363,100 @@ function updateMatchupResultsScreen(data) {
     }
 }
 
+// Track round results state for reordering animation
+let roundResultsReorderTimeout = null;
+
 /**
- * Update round results screen
+ * Update round results screen with reordering animation
+ * Uses FLIP animation technique for smooth reordering
  */
 function updateRoundResultsScreen(data) {
     const screen = screens.roundResults;
+
+    // Clear any pending reorder timeout from previous round
+    if (roundResultsReorderTimeout) {
+        clearTimeout(roundResultsReorderTimeout);
+        roundResultsReorderTimeout = null;
+    }
 
     screen.querySelector('.round-number').textContent = data.roundNumber;
 
     const leaderboard = screen.querySelector('.leaderboard');
     leaderboard.innerHTML = '';
 
-    data.players.forEach(player => {
-        leaderboard.appendChild(createLeaderboardEntry(player, true));
+    // Sort by total score to get final rankings
+    const sortedByTotal = [...data.players].sort((a, b) => b.totalScore - a.totalScore);
+
+    // Assign ranks based on total score
+    let currentRank = 1;
+    sortedByTotal.forEach((player, index) => {
+        if (index > 0 && sortedByTotal[index - 1].totalScore > player.totalScore) {
+            currentRank = index + 1;
+        }
+        player.finalRank = currentRank;
     });
+
+    // Create a map of player to their final position index
+    const finalPositions = new Map();
+    sortedByTotal.forEach((player, index) => {
+        finalPositions.set(player.peerId || player.name, index);
+    });
+
+    // Initially show players in their CURRENT order (as sent from host, sorted by round score)
+    // but we'll animate them to their final positions
+    data.players.forEach((player, index) => {
+        const entry = createLeaderboardEntry(player, true, false);
+        const playerId = player.peerId || player.name;
+        const finalIndex = finalPositions.get(playerId);
+
+        // Store initial and final positions for animation
+        entry.setAttribute('data-initial-index', index);
+        entry.setAttribute('data-final-index', finalIndex);
+        entry.setAttribute('data-final-rank', sortedByTotal[finalIndex].finalRank);
+
+        leaderboard.appendChild(entry);
+    });
+
+    // After 3 seconds, animate to final positions
+    roundResultsReorderTimeout = setTimeout(() => {
+        const entries = Array.from(leaderboard.querySelectorAll('.leaderboard-entry'));
+        const entryHeight = entries[0] ? entries[0].offsetHeight + 15 : 75; // height + gap
+
+        // FIRST: Record current positions
+        const firstPositions = new Map();
+        entries.forEach(entry => {
+            const rect = entry.getBoundingClientRect();
+            firstPositions.set(entry, rect.top);
+        });
+
+        // Calculate and apply transforms to move entries to final positions
+        entries.forEach(entry => {
+            const initialIndex = parseInt(entry.getAttribute('data-initial-index'));
+            const finalIndex = parseInt(entry.getAttribute('data-final-index'));
+            const finalRank = entry.getAttribute('data-final-rank');
+            const moveDistance = (finalIndex - initialIndex) * entryHeight;
+
+            // Update the rank display
+            const rankEl = entry.querySelector('.rank');
+            if (rankEl) {
+                rankEl.textContent = '#' + finalRank;
+                // Update rank color class
+                entry.className = entry.className.replace(/rank-\d+/g, '');
+                entry.classList.add('rank-' + finalRank);
+            }
+
+            // Highlight the total score
+            const totalScoreEl = entry.querySelector('.total-score');
+            if (totalScoreEl) {
+                totalScoreEl.classList.add('highlighted');
+            }
+
+            // Apply the transform animation
+            entry.style.transition = 'transform 0.8s ease-in-out';
+            entry.style.transform = `translateY(${moveDistance}px)`;
+        });
+
+    }, 3000);
 }
 
 /**
@@ -369,6 +478,8 @@ function updateGameResultsScreen(data) {
         winnerName.textContent = data.winnerName;
         winnerLabel.textContent = 'Wins!';
     }
+    // Parse trophy emoji to render as image
+    parseEmojis(trophy);
 
     const leaderboard = screen.querySelector('.leaderboard');
     leaderboard.innerHTML = '';
