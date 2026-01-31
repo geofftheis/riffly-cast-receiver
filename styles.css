@@ -103,9 +103,15 @@ body {
 }
 
 .logo-image {
-    height: 120px;
+    height: 210px;  /* 75% larger than original 120px */
     width: auto;
     margin-bottom: 20px;
+}
+
+/* Connecting screen logo - same size as lobby */
+.logo-image.connecting-logo {
+    height: 210px;
+    margin-bottom: 30px;
 }
 
 .status {
