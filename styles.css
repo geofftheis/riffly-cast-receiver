@@ -21,7 +21,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, var(--riffly-teal) 0%, var(--riffly-dark) 100%);
+    background: var(--riffly-teal);
     color: var(--riffly-white);
     min-height: 100vh;
     overflow: hidden;
